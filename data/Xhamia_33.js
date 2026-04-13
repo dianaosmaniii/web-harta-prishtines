@@ -1,0 +1,1 @@
+var json_Xhamia_33 = {"type":"FeatureCollection","name":"Xhamia_33","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"xy_coordinate_resolution":1e-06,"features":[{"type":"Feature","properties":{"osm_id":"595459349","code":2001.0,"fclass":"muslim","name":"Xhamia"},"geometry":{"type":"Point","coordinates":[21.167987,42.659135]}}]}

@@ -1,0 +1,1 @@
+var json_Kisha_24 = {"type":"FeatureCollection","name":"Kisha_24","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"xy_coordinate_resolution":1e-06,"features":[{"type":"Feature","properties":{"osm_id":"5767981653","code":2561.0,"fclass":"cristian","name":"Kisha katolike \"ShenNdou\""},"geometry":{"type":"Point","coordinates":[21.160105,42.649981]}}]}

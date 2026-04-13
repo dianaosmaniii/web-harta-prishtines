@@ -1,0 +1,1 @@
+var json_Rektorat_28 = {"type":"FeatureCollection","name":"Rektorat_28","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"xy_coordinate_resolution":1e-06,"features":[{"type":"Feature","properties":{"osm_id":"4425014923","code":2081.0,"fclass":"building","name":"Rektorati"},"geometry":{"type":"Point","coordinates":[21.161426,42.658746]}}]}

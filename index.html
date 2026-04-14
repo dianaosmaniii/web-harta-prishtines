@@ -840,6 +840,9 @@ align-items: center;
             background: #fff;
             color:#18263f;
             box-shadow: 0 6px 16px rgba(15,23,42,0.08);
+            pointer-events: auto;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .map-tool-btn::before,
         .map-zoom-btn::before {
@@ -857,10 +860,11 @@ align-items: center;
         .coord-box {
             right: 12px;
             bottom: 12px;
-            max-width: 310px;
+            max-width: 340px;
             white-space: normal;
             line-height: 1.35;
             font-variant-numeric: tabular-nums;
+            z-index: 1450;
         }
         .coord-main { font-weight: 700; display:block; }
         .coord-sub { font-size: 11px; color:#64748b; display:block; margin-top:2px; }
@@ -868,7 +872,7 @@ align-items: center;
             position: absolute;
             left: 12px;
             bottom: 12px;
-            z-index: 1200;
+            z-index: 1450;
             background: rgba(255,255,255,0.95);
             border: 1px solid rgba(214,223,235,0.95);
             border-radius: 12px;
@@ -985,6 +989,7 @@ align-items: center;
                 padding: 6px !important;
                 border-radius: 16px !important;
                 background: rgba(255,255,255,0.82) !important;
+                z-index: 1500 !important;
             }
             .map-tools-grid,
             .map-zoom-grid {
@@ -1005,7 +1010,7 @@ align-items: center;
                 max-width: none !important;
                 font-size: 11px !important;
                 padding: 8px 10px !important;
-                z-index: 1200 !important;
+                z-index: 1500 !important;
             }
             .map-scale-box {
                 left: 10px !important;
@@ -1013,6 +1018,7 @@ align-items: center;
                 bottom: 64px !important;
                 font-size: 11px !important;
                 padding: 7px 9px !important;
+                z-index: 1500 !important;
             }
             .north-arrow {
                 top: 10px !important;
@@ -1032,6 +1038,21 @@ align-items: center;
             .tool-grid,
             .stats-summary-grid {
                 grid-template-columns: 1fr !important;
+            }
+        }
+
+
+        .toolbar-left .webgis-btn,
+        .toolbar-right .webgis-btn,
+        .panel-action-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @supports (padding: max(0px)) {
+            .app-toolbar { top: max(10px, env(safe-area-inset-top)); }
+            .north-arrow { top: max(120px, calc(env(safe-area-inset-top) + 96px)); }
+            @media (max-width: 768px) {
+                .north-arrow { top: max(152px, calc(env(safe-area-inset-top) + 118px)) !important; }
             }
         }
 
@@ -1072,7 +1093,7 @@ align-items: center;
                 <button id="mapZoomHomeBtn" title="Pamja fillestare" aria-label="Pamja fillestare" class="map-zoom-btn home" type="button">⌂<small>Pamja fillestare</small></button>
             </div>
         </div>
-<div id="sidePanel" class="side-panel">
+<div id="sidePanel" class="side-panel" aria-hidden="false">
 
     <div class="panel-intro">
         <h2>Paneli i aplikacionit</h2>
@@ -1401,6 +1422,8 @@ align-items: center;
             }
         }
         
+        proj4.defs('EPSG:9141', '+proj=tmerc +lat_0=0 +lon_0=21 +k=0.9999 +x_0=7500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs');
+
         function createIcon(path, size) {
             return L.icon({
                 iconUrl: 'markers/' + path,
@@ -4162,10 +4185,25 @@ align-items: center;
             renderSearchResults(results);
         }
 
+        function bindPress(el, handler) {
+            if (!el || el.dataset.boundPress === '1') return;
+            el.dataset.boundPress = '1';
+            var activate = function(ev) {
+                if (ev) {
+                    if (typeof ev.preventDefault === 'function') ev.preventDefault();
+                    if (typeof ev.stopPropagation === 'function') ev.stopPropagation();
+                }
+                handler.call(el, ev);
+            };
+            el.addEventListener('click', activate, {passive:false});
+            el.addEventListener('touchend', activate, {passive:false});
+            el.addEventListener('pointerup', activate, {passive:false});
+        }
+
         function bindClickToMany(ids, handler) {
             ids.forEach(function(id){
                 var el = document.getElementById(id);
-                if (el) el.addEventListener('click', handler);
+                if (el) bindPress(el, handler);
             });
         }
 
@@ -4194,18 +4232,23 @@ align-items: center;
         var sidePanel = document.getElementById('sidePanel');
         var panelBackdrop = document.getElementById('panelBackdrop');
         function openPanel() {
+            if (!sidePanel) return;
             if (isMobileLayout()) {
                 sidePanel.classList.add('mobile-open');
                 sidePanel.classList.remove('hidden');
+                sidePanel.setAttribute('aria-hidden','false');
                 if (panelBackdrop) panelBackdrop.classList.add('is-visible');
             } else {
                 sidePanel.classList.remove('hidden');
+                sidePanel.setAttribute('aria-hidden','false');
             }
         }
         function closePanel() {
+            if (!sidePanel) return;
             if (isMobileLayout()) {
                 sidePanel.classList.remove('mobile-open');
                 sidePanel.classList.add('hidden');
+                sidePanel.setAttribute('aria-hidden','true');
                 if (panelBackdrop) panelBackdrop.classList.remove('is-visible');
             } else {
                 sidePanel.classList.add('hidden');
@@ -4219,9 +4262,9 @@ align-items: center;
                 sidePanel.classList.toggle('hidden');
             }
         }
-        document.getElementById('togglePanelBtn').addEventListener('click', togglePanel);
+        bindPress(document.getElementById('togglePanelBtn'), togglePanel);
         if (panelBackdrop) panelBackdrop.addEventListener('click', closePanel);
-        document.getElementById('resetViewBtn').addEventListener('click', function(){ map.fitBounds(initialBounds); });
+        bindPress(document.getElementById('resetViewBtn'), function(){ map.fitBounds(initialBounds); updateCoordBox(map.getCenter()); updateScaleBox(); });
         bindClickToMany(['panelZoomInBtn','mapZoomInBtn'], function(){ map.zoomIn(); });
         bindClickToMany(['panelZoomOutBtn','mapZoomOutBtn'], function(){ map.zoomOut(); });
         bindClickToMany(['panelZoomHomeBtn','mapZoomHomeBtn'], function(){ map.fitBounds(initialBounds); });
@@ -4431,6 +4474,7 @@ align-items: center;
                 sidePanel.classList.remove('mobile-open');
             } else {
                 sidePanel.classList.remove('hidden');
+                sidePanel.setAttribute('aria-hidden','false');
             }
         })();
 
@@ -4454,7 +4498,7 @@ align-items: center;
         if (featureCategoryFilter) featureCategoryFilter.addEventListener('change', runIndexedSearch);
 
         
-        document.getElementById('focusCampusBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('focusCampusBtn'), function(){
             var campusEntry = layerRegistry.find(function(d){ return d.name === 'Kampusi Universitar'; });
             if (!campusEntry) return;
             campusEntry.desiredVisible = true;
@@ -4462,6 +4506,8 @@ align-items: center;
             if (campusEntry.layer.getBounds) map.fitBounds(campusEntry.layer.getBounds(), {padding: isMobileLayout() ? [20,20] : [34,34], maxZoom:17});
             renderLayerToggles();
             updateStats();
+            updateCoordBox(map.getCenter());
+            updateScaleBox();
         });
 
         function setBasemap(value) {
@@ -4509,22 +4555,22 @@ align-items: center;
             opt.textContent = entry.name + ' (' + safeFeatureCount(entry) + ')';
             downloadSelect.appendChild(opt);
         });
-        document.getElementById('downloadGeojsonBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('downloadGeojsonBtn'), function(){
             var entry = layerRegistry.find(function(d){ return d.name === downloadSelect.value; });
             if (!entry || !entry.data) return;
             exportFeatureCollection(entry.data.features || [], entry.name.replace(/\s+/g, '_') + '.geojson');
         });
-        document.getElementById('downloadActiveBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('downloadActiveBtn'), function(){
             var features = collectActiveFeatures();
             if (!features.length) return alert('Nuk ka shtresa aktive për eksport.');
             exportFeatureCollection(features, 'shtresat_aktive.geojson');
         });
-        document.getElementById('downloadAllBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('downloadAllBtn'), function(){
             var features = [];
             layerRegistry.forEach(function(entry){ if (entry.data && entry.data.features) features = features.concat(entry.data.features); });
             exportFeatureCollection(features, 'te_gjitha_shtresat.geojson');
         });
-        document.getElementById('copyStatsBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('copyStatsBtn'), function(){
             var txt = buildStatsClipboardText();
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(txt);
@@ -4570,7 +4616,7 @@ align-items: center;
         }
         document.getElementById('pointScale').addEventListener('input', applySymbology);
         document.getElementById('lineScale').addEventListener('input', applySymbology);
-        document.getElementById('resetSymbologyBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('resetSymbologyBtn'), function(){
             document.getElementById('pointScale').value = 1.0;
             document.getElementById('lineScale').value = 1.5;
             document.getElementById('polygonOpacity').value = 0.45;
@@ -4593,21 +4639,34 @@ align-items: center;
             if (!scaleBox) return;
             scaleBox.textContent = 'Shkalla: ~ ' + formatScaleValue(getApproxScale()) + ' · Z' + map.getZoom();
         }
+        function formatKosovaref(latlng) {
+            try {
+                var xy = proj4('EPSG:4326', 'EPSG:9141', [latlng.lng, latlng.lat]);
+                return { x: xy[0], y: xy[1] };
+            } catch (err) {
+                return null;
+            }
+        }
         function updateCoordBox(latlng) {
             var box = document.getElementById('coordBox');
             if (!box) return;
-            if (!latlng) {
-                box.innerHTML = '<span class="coord-main">Koordinatat: lëviz kursorin mbi hartë</span><span class="coord-sub">WGS84 (Lat/Lon) dhe Web Mercator (X/Y)</span>';
+            var target = latlng || map.getCenter();
+            if (!target) {
+                box.innerHTML = '<span class="coord-main">Koordinatat: -</span><span class="coord-sub">KOSOVAREF01 / Balkans zone 7 (EPSG:9141)</span>';
                 return;
             }
-            var projected = map.options.crs.project(latlng);
-            box.innerHTML = '<span class="coord-main">Lat ' + latlng.lat.toFixed(6) + ' | Lon ' + latlng.lng.toFixed(6) + '</span>' +
-                '<span class="coord-sub">X ' + projected.x.toFixed(0) + ' m | Y ' + projected.y.toFixed(0) + ' m</span>';
+            var kosovaref = formatKosovaref(target);
+            var mainLine = kosovaref
+                ? 'X ' + kosovaref.x.toFixed(3) + ' m | Y ' + kosovaref.y.toFixed(3) + ' m'
+                : 'Koordinatat Kosovaref nuk u llogaritën';
+            box.innerHTML = '<span class="coord-main">' + mainLine + '</span>' +
+                '<span class="coord-sub">KOSOVAREF01 / Balkans zone 7 (EPSG:9141) · Lat ' + target.lat.toFixed(6) + ' | Lon ' + target.lng.toFixed(6) + '</span>';
         }
-        updateCoordBox();
+        updateCoordBox(map.getCenter());
         updateScaleBox();
         map.on('mousemove', function(e){ updateCoordBox(e.latlng); });
-        map.on('zoomend moveend resize', updateScaleBox);
+        map.on('click', function(e){ updateCoordBox(e.latlng); });
+        map.on('move zoom zoomend moveend resize', function(){ updateCoordBox(map.getCenter()); updateScaleBox(); });
 
         var locateControl = L.control({position:'topright'});
         locateControl.onAdd = function() {
@@ -4649,7 +4708,7 @@ align-items: center;
         document.querySelectorAll('.radius-preset').forEach(function(btn){
             btn.addEventListener('click', function(){ document.getElementById('analysisRadius').value = this.dataset.radius; });
         });
-        document.getElementById('startAnalysisBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('startAnalysisBtn'), function(){
             analysisArmed = !analysisArmed;
             updateAnalysisState();
         });
@@ -4726,12 +4785,12 @@ align-items: center;
             if (info) info.textContent = vgiArmed ? 'Kliko në hartë për të shtuar pikën me kategorinë dhe përshkrimin e mësipërm.' : 'VGI është joaktiv. Plotëso kategorinë dhe përshkrimin, pastaj aktivizo regjimin VGI.';
         }
         var toggleVgiBtn = document.getElementById('toggleVgiBtn');
-        toggleVgiBtn.addEventListener('click', function(){ vgiArmed = !vgiArmed; updateVgiState(); });
-        document.getElementById('exportVgiBtn').addEventListener('click', function(){
+        bindPress(toggleVgiBtn, function(){ vgiArmed = !vgiArmed; updateVgiState(); });
+        bindPress(document.getElementById('exportVgiBtn'), function(){
             var geo = vgiLayer.toGeoJSON();
             exportFeatureCollection(geo.features || [], 'VGI_feedback.geojson');
         });
-        document.getElementById('clearVgiBtn').addEventListener('click', function(){
+        bindPress(document.getElementById('clearVgiBtn'), function(){
             if (!confirm('A dëshironi t’i fshini të gjitha pikat VGI lokale?')) return;
             vgiLayer.clearLayers(); saveVgi();
         });

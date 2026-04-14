@@ -438,9 +438,20 @@ align-items: center;
         }
         .zoom-btn:hover { background:#f8fbff; border-color:#b9c7dc; }
         .zoom-btn.home { font-size:16px; }
-        .leaflet-top.leaflet-left .leaflet-control,
-        .leaflet-bottom.leaflet-left .leaflet-control {
+        .leaflet-top.leaflet-left .leaflet-control:not(.leaflet-control-scale),
+        .leaflet-bottom.leaflet-left .leaflet-control:not(.leaflet-control-scale) {
             display:none !important;
+        }
+        .leaflet-control-scale {
+            margin: 0 0 12px 12px !important;
+        }
+        .leaflet-control-scale-line {
+            border-color: #1e293b !important;
+            color: #0f172a !important;
+            background: rgba(255,255,255,0.88) !important;
+            font-weight: 700;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.10);
         }
 
         .search-result-item {
@@ -845,7 +856,55 @@ align-items: center;
         .coord-box {
             right: 12px;
             bottom: 12px;
-            max-width: 250px;
+            max-width: 310px;
+            white-space: normal;
+            line-height: 1.35;
+            font-variant-numeric: tabular-nums;
+        }
+        .coord-main { font-weight: 700; display:block; }
+        .coord-sub { font-size: 11px; color:#64748b; display:block; margin-top:2px; }
+        .map-scale-box {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            z-index: 1200;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid rgba(214,223,235,0.95);
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.14);
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #24344d;
+            font-weight: 700;
+        }
+        .north-arrow {
+            position: absolute;
+            right: 12px;
+            top: 120px;
+            z-index: 1200;
+            width: 52px;
+            height: 76px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(214,223,235,0.95);
+            box-shadow: 0 8px 18px rgba(15,23,42,0.14);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:4px;
+            pointer-events:none;
+        }
+        .north-arrow .arrow {
+            font-size: 26px;
+            line-height: 1;
+            color:#0f172a;
+        }
+        .north-arrow .label {
+            font-size: 13px;
+            font-weight: 800;
+            color:#0f172a;
+            letter-spacing: .08em;
         }
         @media (max-width: 1024px) {
             .center-title { width: min(540px, calc(100vw - 360px)); }
@@ -914,12 +973,18 @@ align-items: center;
                 display: block !important;
             }
             .map-tools-card {
+                display: block !important;
                 top: auto !important;
                 right: 10px !important;
-                bottom: 128px !important;
+                bottom: 96px !important;
                 transform: none !important;
                 padding: 6px !important;
                 border-radius: 16px !important;
+                background: rgba(255,255,255,0.82) !important;
+            }
+            .map-tools-grid,
+            .map-zoom-grid {
+                gap: 6px !important;
             }
             .map-tool-btn,
             .map-zoom-btn {
@@ -938,6 +1003,20 @@ align-items: center;
                 padding: 8px 10px !important;
                 z-index: 1200 !important;
             }
+            .map-scale-box {
+                left: 10px !important;
+                right: auto !important;
+                bottom: 64px !important;
+                font-size: 11px !important;
+                padding: 7px 9px !important;
+            }
+            .north-arrow {
+                top: 152px !important;
+                right: 10px !important;
+                width: 46px !important;
+                height: 68px !important;
+            }
+            .north-arrow .arrow { font-size: 22px !important; }
             .analysis-box {
                 left: 10px !important;
                 right: 10px !important;
@@ -1165,7 +1244,9 @@ align-items: center;
     </details>
 
 </div>
+        <div id="northArrow" class="north-arrow"><div class="label">N</div><div class="arrow">▲</div></div>
         <div id="coordBox" class="coord-box">Koordinatat: -</div>
+        <div id="mapScaleBox" class="map-scale-box">Shkalla: -</div>
         <div id="analysisBox" class="analysis-box hidden"></div>
 
         <script src="js/qgis2web_expressions.js"></script>
@@ -3857,9 +3938,9 @@ align-items: center;
                     ev.stopPropagation();
                     var checked = this.checked;
                     groupEntries.forEach(function(entry){
-                        if (checked) map.addLayer(entry.layer);
-                        else map.removeLayer(entry.layer);
+                        entry.desiredVisible = checked;
                     });
+                    applyLayerVisibilityByZoom();
                     updateStats();
                     renderLayerToggles();
                     updateEmptyState();
@@ -3888,7 +3969,8 @@ align-items: center;
 
                     var checkbox = row.querySelector('input');
                     checkbox.addEventListener('change', function(){
-                        if (this.checked) map.addLayer(entry.layer); else map.removeLayer(entry.layer);
+                        entry.desiredVisible = this.checked;
+                        applyLayerVisibilityByZoom();
                         updateStats();
                         renderLayerToggles();
                         updateEmptyState();
@@ -4082,7 +4164,35 @@ align-items: center;
 
         var initialBounds = map.getBounds();
         var sidePanel = document.getElementById('sidePanel');
-        document.getElementById('togglePanelBtn').addEventListener('click', function(){ sidePanel.classList.toggle('hidden'); });
+        var panelBackdrop = document.getElementById('panelBackdrop');
+        function openPanel() {
+            if (isMobileLayout()) {
+                sidePanel.classList.add('mobile-open');
+                sidePanel.classList.remove('hidden');
+                if (panelBackdrop) panelBackdrop.classList.add('is-visible');
+            } else {
+                sidePanel.classList.remove('hidden');
+            }
+        }
+        function closePanel() {
+            if (isMobileLayout()) {
+                sidePanel.classList.remove('mobile-open');
+                sidePanel.classList.add('hidden');
+                if (panelBackdrop) panelBackdrop.classList.remove('is-visible');
+            } else {
+                sidePanel.classList.add('hidden');
+            }
+        }
+        function togglePanel() {
+            if (isMobileLayout()) {
+                if (sidePanel.classList.contains('mobile-open')) closePanel();
+                else openPanel();
+            } else {
+                sidePanel.classList.toggle('hidden');
+            }
+        }
+        document.getElementById('togglePanelBtn').addEventListener('click', togglePanel);
+        if (panelBackdrop) panelBackdrop.addEventListener('click', closePanel);
         document.getElementById('resetViewBtn').addEventListener('click', function(){ map.fitBounds(initialBounds); });
         bindClickToMany(['panelZoomInBtn','mapZoomInBtn'], function(){ map.zoomIn(); });
         bindClickToMany(['panelZoomOutBtn','mapZoomOutBtn'], function(){ map.zoomOut(); });
@@ -4223,23 +4333,35 @@ align-items: center;
 
         function setInitialVisibility() {
             layerRegistry.forEach(function(entry){
+                entry.desiredVisible = false;
                 map.removeLayer(entry.layer);
             });
             ['Kampusi Universitar','Fakultetet','Fakulteti Teknik','Biblioteka Kombëtare','Konviktet','Menza','Parkingu','Rektorati','Salla 1 Tetori','Rrugë kryesore','Rrugë kryesore 2','Rrugë dytësore','Shtigje për ecje','Biblioteka','Amfiteatri','Rektorat','Salla e sporteve','Spital apo Qendër familjare','Menza e studentëve','Barnatore','Bankomat','Market','Restaurant','Banka','Galeria e Artit'].forEach(function(name){
                 var entry = layerRegistry.find(function(d){ return d.name === name; });
-                if (entry) map.addLayer(entry.layer);
+                if (entry) entry.desiredVisible = true;
+            });
+            applyLayerVisibilityByZoom();
+        }
+
+        function entryVisibleAtCurrentZoom(entry) {
+            var zoom = map.getZoom();
+            if (entry.minZoom && zoom < entry.minZoom) return false;
+            if (entry.maxZoom && zoom > entry.maxZoom) return false;
+            return true;
+        }
+
+        function applyLayerVisibilityByZoom() {
+            layerRegistry.forEach(function(entry){
+                var shouldShow = !!entry.desiredVisible && entryVisibleAtCurrentZoom(entry);
+                if (shouldShow && !map.hasLayer(entry.layer)) map.addLayer(entry.layer);
+                if (!shouldShow && map.hasLayer(entry.layer)) map.removeLayer(entry.layer);
             });
         }
 
         function refreshZoomVisibility() {
-            var zoom = map.getZoom();
-            layerRegistry.forEach(function(entry){
-                if (entry.type !== 'point' || !entry.minZoom) return;
-                if (zoom < entry.minZoom && map.hasLayer(entry.layer)) {
-                    map.removeLayer(entry.layer);
-                }
-            });
+            applyLayerVisibilityByZoom();
             renderLayerToggles();
+            updateStats();
         }
 
         var basemapSelect = document.getElementById('basemapSelect');
@@ -4307,7 +4429,8 @@ align-items: center;
         document.getElementById('focusCampusBtn').addEventListener('click', function(){
             var campusEntry = layerRegistry.find(function(d){ return d.name === 'Kampusi Universitar'; });
             if (!campusEntry) return;
-            if (!map.hasLayer(campusEntry.layer)) map.addLayer(campusEntry.layer);
+            campusEntry.desiredVisible = true;
+            applyLayerVisibilityByZoom();
             if (campusEntry.layer.getBounds) map.fitBounds(campusEntry.layer.getBounds(), {padding: isMobileLayout() ? [20,20] : [34,34], maxZoom:17});
             renderLayerToggles();
             updateStats();
@@ -4426,10 +4549,39 @@ align-items: center;
             applySymbology();
         });
         applySymbology();
-        document.getElementById('coordBox').innerHTML = 'Koordinatat: lëviz kursorin mbi hartë';
-        map.on('mousemove', function(e){ document.getElementById('coordBox').innerHTML = 'Lat: ' + e.latlng.lat.toFixed(6) + ' | Lon: ' + e.latlng.lng.toFixed(6); });
+        function formatScaleValue(scaleValue) {
+            if (!scaleValue || !isFinite(scaleValue)) return '-';
+            return '1:' + Math.round(scaleValue).toLocaleString('sq-AL');
+        }
+        function getApproxScale() {
+            var center = map.getCenter();
+            var y = map.getSize().y / 2;
+            var maxMeters = map.containerPointToLatLng([0, y]).distanceTo(map.containerPointToLatLng([100, y]));
+            var metersPerPixel = maxMeters / 100;
+            return metersPerPixel * 3779.527559;
+        }
+        function updateScaleBox() {
+            var scaleBox = document.getElementById('mapScaleBox');
+            if (!scaleBox) return;
+            scaleBox.textContent = 'Shkalla: ~ ' + formatScaleValue(getApproxScale()) + ' · Z' + map.getZoom();
+        }
+        function updateCoordBox(latlng) {
+            var box = document.getElementById('coordBox');
+            if (!box) return;
+            if (!latlng) {
+                box.innerHTML = '<span class="coord-main">Koordinatat: lëviz kursorin mbi hartë</span><span class="coord-sub">WGS84 (Lat/Lon) dhe Web Mercator (X/Y)</span>';
+                return;
+            }
+            var projected = map.options.crs.project(latlng);
+            box.innerHTML = '<span class="coord-main">Lat ' + latlng.lat.toFixed(6) + ' | Lon ' + latlng.lng.toFixed(6) + '</span>' +
+                '<span class="coord-sub">X ' + projected.x.toFixed(0) + ' m | Y ' + projected.y.toFixed(0) + ' m</span>';
+        }
+        updateCoordBox();
+        updateScaleBox();
+        map.on('mousemove', function(e){ updateCoordBox(e.latlng); });
+        map.on('zoomend moveend resize', updateScaleBox);
 
-        var locateControl = L.control({position:'topleft'});
+        var locateControl = L.control({position:'topright'});
         locateControl.onAdd = function() {
             var div = L.DomUtil.create('div', 'custom-control-btn');
             div.title = 'Gjej vendndodhjen time';

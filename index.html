@@ -797,7 +797,7 @@ align-items: center;
             position: absolute;
             pointer-events: auto;
             right: 12px;
-            top: 50%;
+            top: 56%;
             transform: translateY(-50%);
             z-index: 1350;
             width: auto;
@@ -853,7 +853,8 @@ align-items: center;
         #mapQuickSearchBtn::before { content:'⌕'; }
         #mapQuickBasemapBtn::before { content:'◫'; font-size:18px; }
         #mapQuickAnalysisBtn::before { content:'◎'; }
-        #mapQuickVgiBtn::before { content:'＋'; }
+        #mapQuickLocateBtn::before { content:'⌖'; font-size:18px; }
+        #mapQuickDistanceBtn::before { content:'⇄'; font-size:18px; }
         #mapZoomInBtn::before { content:'+'; }
         #mapZoomOutBtn::before { content:'−'; }
         #mapZoomHomeBtn::before { content:'⌂'; font-size:18px; }
@@ -885,7 +886,7 @@ align-items: center;
         .north-arrow {
             position: absolute;
             right: 12px;
-            top: 12px;
+            top: 6px;
             z-index: 1200;
             width: 52px;
             height: 76px;
@@ -1021,7 +1022,7 @@ align-items: center;
                 z-index: 1500 !important;
             }
             .north-arrow {
-                top: 10px !important;
+                top: 6px !important;
                 right: 10px !important;
                 width: 46px !important;
                 height: 68px !important;
@@ -1050,9 +1051,9 @@ align-items: center;
         }
         @supports (padding: max(0px)) {
             .app-toolbar { top: max(10px, env(safe-area-inset-top)); }
-            .north-arrow { top: max(120px, calc(env(safe-area-inset-top) + 96px)); }
+            .north-arrow { top: max(8px, calc(env(safe-area-inset-top) + 6px)); }
             @media (max-width: 768px) {
-                .north-arrow { top: max(152px, calc(env(safe-area-inset-top) + 118px)) !important; }
+                .north-arrow { top: max(8px, calc(env(safe-area-inset-top) + 6px)) !important; }
             }
         }
 
@@ -1084,7 +1085,8 @@ align-items: center;
                 <button id="mapQuickSearchBtn" title="Kërko objekt" aria-label="Kërko objekt" class="map-tool-btn" type="button"><strong>Kërko objekt</strong><small>Gjej dhe fokuso objektin</small></button>
                 <button id="mapQuickBasemapBtn" title="Ndrysho basemap" aria-label="Ndrysho basemap" class="map-tool-btn" type="button"><strong>Ndrysho basemap</strong><small>Kalimi satelit / OSM / pa sfond</small></button>
                 <button id="mapQuickAnalysisBtn" title="Analizë rrezore" aria-label="Analizë rrezore" class="map-tool-btn" type="button"><strong>Analizë rrezore</strong><small>Aktivizo analizën me klikim</small></button>
-                <button id="mapQuickVgiBtn" title="Shto VGI" aria-label="Shto VGI" class="map-tool-btn" type="button"><strong>Shto VGI</strong><small>Regjistro feedback lokal</small></button>
+                <button id="mapQuickLocateBtn" title="Gjej vendndodhjen time" aria-label="Gjej vendndodhjen time" class="map-tool-btn" type="button"><strong>Gjej vendndodhjen time</strong><small>Qendro te pozicioni aktual</small></button>
+                <button id="mapQuickDistanceBtn" title="Distanca nga unë" aria-label="Distanca nga unë" class="map-tool-btn" type="button"><strong>Distanca nga unë</strong><small>Kliko objektin për distancë</small></button>
             </div>
             <div class="map-tools-divider"></div>
             <div class="map-zoom-grid">
@@ -1119,9 +1121,27 @@ align-items: center;
                     <button id="quickSearchBtn" class="panel-action-btn" type="button">Kërko objekt</button>
                     <button id="quickBasemapBtn" class="panel-action-btn" type="button">Ndrysho basemap</button>
                     <button id="quickAnalysisBtn" class="panel-action-btn" type="button">Analizë rrezore</button>
+                    <button id="quickLocateBtn" class="panel-action-btn" type="button">Gjej vendndodhjen time</button>
+                    <button id="quickDistanceBtn" class="panel-action-btn" type="button">Distanca nga unë</button>
                     <button id="quickVgiBtn" class="panel-action-btn" type="button">Shto VGI</button>
                 </div>
                 <div class="panel-compact-note">Veglat kryesore janë vendosur edhe në anën e djathtë të hartës për qasje më të shpejtë.</div>
+            </div>
+
+            <div class="subsection-card">
+                <h4>Rruga deri te objekti</h4>
+                <div class="control-row">
+                    <label for="routeModeSelect">Mënyra e lëvizjes</label>
+                    <select id="routeModeSelect" class="webgis-select">
+                        <option value="foot" selected>Në këmbë</option>
+                        <option value="driving">Me veturë</option>
+                    </select>
+                </div>
+                <div class="inline-actions">
+                    <button id="activateRouteBtn" class="webgis-btn" type="button">Aktivizo rrugën</button>
+                    <span id="routeStatusPill" class="status-pill">Rruga joaktive</span>
+                </div>
+                <div id="routeInfoPanel" class="muted-note">Aktivizo veglën dhe kliko një objekt në hartë për të parë rrugën më të shpejtë, distancën dhe kohën nga vendndodhja juaj.</div>
             </div>
 
             <div class="panel-section">
@@ -1270,7 +1290,7 @@ align-items: center;
 
 </div>
         <div id="northArrow" class="north-arrow"><div class="label">N</div><div class="arrow">▲</div></div>
-        <div id="coordBox" class="coord-box">Koordinatat: -</div>
+        <div id="coordBox" class="coord-box">KOSOVAREF: -</div>
         <div id="mapScaleBox" class="map-scale-box">Shkalla: -</div>
         <div id="analysisBox" class="analysis-box hidden"></div>
 
@@ -4195,9 +4215,12 @@ align-items: center;
                 }
                 handler.call(el, ev);
             };
-            el.addEventListener('click', activate, {passive:false});
-            el.addEventListener('touchend', activate, {passive:false});
-            el.addEventListener('pointerup', activate, {passive:false});
+            if (window.PointerEvent) {
+                el.addEventListener('pointerup', activate, {passive:false});
+            } else {
+                el.addEventListener('click', activate, {passive:false});
+                el.addEventListener('touchend', activate, {passive:false});
+            }
         }
 
         function bindClickToMany(ids, handler) {
@@ -4348,6 +4371,7 @@ align-items: center;
 
                     l.off('click');
                     l.on('click', function(e){
+                        if (showDistanceToObject(l, entry, e.latlng)) return;
                         if (typeof l.openPopup === 'function') l.openPopup(e.latlng);
                     });
 
@@ -4637,7 +4661,7 @@ align-items: center;
         function updateScaleBox() {
             var scaleBox = document.getElementById('mapScaleBox');
             if (!scaleBox) return;
-            scaleBox.textContent = 'Shkalla: ~ ' + formatScaleValue(getApproxScale()) + ' · Z' + map.getZoom();
+            scaleBox.textContent = 'Shkalla: ~ ' + formatScaleValue(getApproxScale());
         }
         function formatKosovaref(latlng) {
             try {
@@ -4652,15 +4676,15 @@ align-items: center;
             if (!box) return;
             var target = latlng || map.getCenter();
             if (!target) {
-                box.innerHTML = '<span class="coord-main">Koordinatat: -</span><span class="coord-sub">KOSOVAREF01 / Balkans zone 7 (EPSG:9141)</span>';
+                box.innerHTML = '<span class="coord-main">KOSOVAREF: -</span><span class="coord-sub">KOSOVAREF01 (EPSG:9141)</span>';
                 return;
             }
             var kosovaref = formatKosovaref(target);
             var mainLine = kosovaref
                 ? 'X ' + kosovaref.x.toFixed(3) + ' m | Y ' + kosovaref.y.toFixed(3) + ' m'
-                : 'Koordinatat Kosovaref nuk u llogaritën';
+                : 'KOSOVAREF nuk u llogarit';
             box.innerHTML = '<span class="coord-main">' + mainLine + '</span>' +
-                '<span class="coord-sub">KOSOVAREF01 / Balkans zone 7 (EPSG:9141) · Lat ' + target.lat.toFixed(6) + ' | Lon ' + target.lng.toFixed(6) + '</span>';
+                '<span class="coord-sub">KOSOVAREF01 (EPSG:9141)</span>';
         }
         updateCoordBox(map.getCenter());
         updateScaleBox();
@@ -4668,21 +4692,182 @@ align-items: center;
         map.on('click', function(e){ updateCoordBox(e.latlng); });
         map.on('move zoom zoomend moveend resize', function(){ updateCoordBox(map.getCenter()); updateScaleBox(); });
 
-        var locateControl = L.control({position:'topright'});
-        locateControl.onAdd = function() {
-            var div = L.DomUtil.create('div', 'custom-control-btn');
-            div.title = 'Gjej vendndodhjen time';
-            div.innerHTML = '<i class="fas fa-location-arrow"></i>';
-            L.DomEvent.on(div, 'click', function(ev){ L.DomEvent.stop(ev); map.locate({setView:true, maxZoom:18}); });
-            return div;
-        };
-        locateControl.addTo(map);
         var locateLayerGroup = L.layerGroup().addTo(map);
+        var userLocationLatLng = null;
+        var userLocationAccuracy = null;
+        function locateMe() {
+            if (!navigator.geolocation) {
+                alert('Shfletuesi nuk e mbështet geolokacionin.');
+                return;
+            }
+            map.locate({setView:true, maxZoom:18, enableHighAccuracy:true});
+        }
         map.on('locationfound', function(e){
+            userLocationLatLng = e.latlng;
+            userLocationAccuracy = e.accuracy;
             locateLayerGroup.clearLayers();
             L.circle(e.latlng, {radius:e.accuracy, color:'#1d8cf8', fillColor:'#1d8cf8', fillOpacity:0.15}).addTo(locateLayerGroup);
-            L.marker(e.latlng).addTo(locateLayerGroup).bindPopup('Vendndodhja juaj e përafërt').openPopup();
+            L.circleMarker(e.latlng, {radius:7, color:'#0f4cbd', fillColor:'#1d8cf8', fillOpacity:1, weight:2}).addTo(locateLayerGroup)
+                .bindPopup('Vendndodhja juaj e përafërt').openPopup();
+            updateCoordBox(e.latlng);
         });
+        map.on('locationerror', function(){
+            alert('Vendndodhja nuk u gjet. Lejo Location në shfletues dhe provo përsëri.');
+        });
+
+
+        var distanceModeArmed = false;
+        var distanceLayerGroup = L.layerGroup().addTo(map);
+        var activeRouteRequestId = 0;
+
+        function formatDistanceKm(meters) {
+            if (meters === null || meters === undefined || isNaN(meters)) return '-';
+            return (meters / 1000).toFixed(2) + ' km';
+        }
+        function formatDurationMin(seconds) {
+            if (seconds === null || seconds === undefined || isNaN(seconds)) return '-';
+            var minutes = Math.max(1, Math.round(seconds / 60));
+            return minutes + ' min';
+        }
+        function getSelectedRouteMode() {
+            var sel = document.getElementById('routeModeSelect');
+            return sel ? sel.value : 'foot';
+        }
+        function getRouteModeLabel(mode) {
+            return mode === 'driving' ? 'Me veturë' : 'Në këmbë';
+        }
+        function updateRouteInfoPanel(data) {
+            var panel = document.getElementById('routeInfoPanel');
+            if (!panel) return;
+            if (!data) {
+                panel.innerHTML = 'Aktivizo veglën dhe kliko një objekt në hartë për të parë rrugën më të shpejtë, distancën dhe kohën nga vendndodhja juaj.';
+                return;
+            }
+            if (data.loading) {
+                panel.innerHTML = 'Po llogaritet rruga optimale deri te objekti i zgjedhur...';
+                return;
+            }
+            if (data.error) {
+                panel.innerHTML = '<span style="color:#b42318;font-weight:700;">Nuk u gjet rrugë.</span> ' + data.error;
+                return;
+            }
+            panel.innerHTML = '' +
+                '<table style="width:100%; border-collapse:collapse; margin-top:4px;">' +
+                '<tr><td style="padding:6px 4px; border-bottom:1px solid #e7edf5;"><b>Destinacioni</b></td><td style="padding:6px 4px; border-bottom:1px solid #e7edf5; text-align:right;">' + data.destination + '</td></tr>' +
+                '<tr><td style="padding:6px 4px; border-bottom:1px solid #e7edf5;"><b>Mënyra</b></td><td style="padding:6px 4px; border-bottom:1px solid #e7edf5; text-align:right;">' + data.modeLabel + '</td></tr>' +
+                '<tr><td style="padding:6px 4px; border-bottom:1px solid #e7edf5;"><b>Distanca rrugore</b></td><td style="padding:6px 4px; border-bottom:1px solid #e7edf5; text-align:right;">' + data.distanceLabel + '</td></tr>' +
+                '<tr><td style="padding:6px 4px; border-bottom:1px solid #e7edf5;"><b>Koha e udhëtimit</b></td><td style="padding:6px 4px; border-bottom:1px solid #e7edf5; text-align:right;">' + data.durationLabel + '</td></tr>' +
+                '<tr><td style="padding:6px 4px;"><b>Vlerësimi</b></td><td style="padding:6px 4px; text-align:right;">' + data.summary + '</td></tr>' +
+                '</table>';
+        }
+        function updateDistanceState() {
+            setToolActiveState(['mapQuickDistanceBtn'], distanceModeArmed);
+            var quickBtn = document.getElementById('quickDistanceBtn');
+            if (quickBtn) quickBtn.classList.toggle('primary', distanceModeArmed);
+            var activateRouteBtn = document.getElementById('activateRouteBtn');
+            if (activateRouteBtn) activateRouteBtn.classList.toggle('primary', distanceModeArmed);
+            var pill = document.getElementById('routeStatusPill');
+            if (pill) {
+                pill.textContent = distanceModeArmed ? 'Rruga aktive' : 'Rruga joaktive';
+                pill.className = 'status-pill' + (distanceModeArmed ? ' active' : '');
+            }
+            if (distanceModeArmed && !userLocationLatLng) {
+                locateMe();
+            }
+            if (!distanceModeArmed) {
+                distanceLayerGroup.clearLayers();
+                updateRouteInfoPanel(null);
+            }
+        }
+        function getLayerTargetLatLng(layer, clickLatLng) {
+            if (clickLatLng) return clickLatLng;
+            if (layer.getLatLng) return layer.getLatLng();
+            if (layer.getBounds) return layer.getBounds().getCenter();
+            return null;
+        }
+        async function fetchRouteFromService(startLatLng, endLatLng, mode) {
+            var modeName = mode === 'driving' ? 'driving' : 'foot';
+            var serviceUrls = [
+                'https://routing.openstreetmap.de/routed-' + (modeName === 'driving' ? 'car' : 'foot') + '/route/v1/' + modeName + '/' + startLatLng.lng + ',' + startLatLng.lat + ';' + endLatLng.lng + ',' + endLatLng.lat + '?overview=full&geometries=geojson',
+                'https://router.project-osrm.org/route/v1/' + modeName + '/' + startLatLng.lng + ',' + startLatLng.lat + ';' + endLatLng.lng + ',' + endLatLng.lat + '?overview=full&geometries=geojson'
+            ];
+            var lastError = null;
+            for (var i = 0; i < serviceUrls.length; i++) {
+                try {
+                    var response = await fetch(serviceUrls[i]);
+                    if (!response.ok) {
+                        lastError = new Error('HTTP ' + response.status);
+                        continue;
+                    }
+                    var data = await response.json();
+                    if (data && data.routes && data.routes.length) {
+                        return data.routes[0];
+                    }
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+            throw lastError || new Error('Route service unavailable');
+        }
+        function showDistanceToObject(layer, entry, clickLatLng) {
+            if (!distanceModeArmed) return false;
+            if (!userLocationLatLng) {
+                locateMe();
+                alert('Së pari po merret vendndodhja juaj. Provoje edhe një herë pasi të shfaqet pika juaj.');
+                return true;
+            }
+            var targetLatLng = getLayerTargetLatLng(layer, clickLatLng);
+            if (!targetLatLng) return false;
+
+            var routeMode = getSelectedRouteMode();
+            var requestId = ++activeRouteRequestId;
+            var destinationName = ((layer.feature && layer.feature.properties && (layer.feature.properties.name || layer.feature.properties.NAME)) || entry.name || 'Objekti i zgjedhur');
+            updateRouteInfoPanel({loading:true});
+            distanceLayerGroup.clearLayers();
+            L.circleMarker(targetLatLng, {radius:6, color:'#0f766e', fillColor:'#14b8a6', fillOpacity:1, weight:2}).addTo(distanceLayerGroup);
+
+            fetchRouteFromService(userLocationLatLng, targetLatLng, routeMode).then(function(route){
+                if (requestId !== activeRouteRequestId) return;
+                var coords = (route.geometry && route.geometry.coordinates ? route.geometry.coordinates : []).map(function(c){ return [c[1], c[0]]; });
+                if (coords.length) {
+                    var routeLine = L.polyline(coords, {color:'#0f766e', weight:5, opacity:0.9}).addTo(distanceLayerGroup);
+                    map.fitBounds(routeLine.getBounds(), {padding:[30,30], maxZoom:18});
+                }
+                var distanceLabel = formatDistanceKm(route.distance);
+                var durationLabel = formatDurationMin(route.duration);
+                var summary = routeMode === 'driving' ? 'Rruga më e shpejtë me veturë' : 'Rruga më e përshtatshme në këmbë';
+                updateRouteInfoPanel({
+                    destination: destinationName,
+                    modeLabel: getRouteModeLabel(routeMode),
+                    distanceLabel: distanceLabel,
+                    durationLabel: durationLabel,
+                    summary: summary
+                });
+                var popupHtml = buildSmartPopup(layer.feature, entry) +
+                    '<table style="width:100%; border-collapse:collapse; margin-top:8px;">' +
+                    '<tr><td><b>Distanca rrugore</b></td><td style="text-align:right;">' + distanceLabel + '</td></tr>' +
+                    '<tr><td><b>Koha</b></td><td style="text-align:right;">' + durationLabel + '</td></tr>' +
+                    '<tr><td><b>Mënyra</b></td><td style="text-align:right;">' + getRouteModeLabel(routeMode) + '</td></tr>' +
+                    '</table>';
+                layer.bindPopup(popupHtml, {maxWidth: 320}).openPopup(targetLatLng);
+            }).catch(function(err){
+                if (requestId !== activeRouteRequestId) return;
+                var straightMeters = map.distance(userLocationLatLng, targetLatLng);
+                L.polyline([userLocationLatLng, targetLatLng], {color:'#0f766e', weight:3, dashArray:'8,6'}).addTo(distanceLayerGroup);
+                var fallbackMinutes = routeMode === 'driving' ? Math.max(1, Math.round((straightMeters / 1000) / 30 * 60)) : Math.max(1, Math.round((straightMeters / 1000) / 4.5 * 60));
+                updateRouteInfoPanel({
+                    destination: destinationName,
+                    modeLabel: getRouteModeLabel(routeMode),
+                    distanceLabel: formatDistanceKm(straightMeters),
+                    durationLabel: fallbackMinutes + ' min',
+                    summary: 'Vlerësim i përafërt',
+                    error: false
+                });
+                var popupHtml = buildSmartPopup(layer.feature, entry) + '<div class="muted-note"><b>Vlerësim i përafërt:</b> ' + formatDistanceKm(straightMeters) + ' · ' + fallbackMinutes + ' min</div>';
+                layer.bindPopup(popupHtml, {maxWidth: 320}).openPopup(targetLatLng);
+            });
+            return true;
+        }
 
         var analysisArmed = false;
         var analysisLayerGroup = L.layerGroup().addTo(map);
@@ -4806,6 +4991,8 @@ align-items: center;
             }, 120);
         });
         bindClickToMany(['quickBasemapBtn','mapQuickBasemapBtn'], cycleBasemap);
+        bindClickToMany(['quickLocateBtn','mapQuickLocateBtn'], locateMe);
+        bindClickToMany(['quickDistanceBtn','mapQuickDistanceBtn','activateRouteBtn'], function(){ distanceModeArmed = !distanceModeArmed; updateDistanceState(); });
         bindClickToMany(['quickAnalysisBtn','mapQuickAnalysisBtn'], function(){ document.getElementById('startAnalysisBtn').click(); });
         bindClickToMany(['quickVgiBtn','mapQuickVgiBtn'], function(){ document.getElementById('toggleVgiBtn').click(); });
         map.on('click', function(e){
@@ -4832,6 +5019,7 @@ align-items: center;
         });
         updateAnalysisState();
         updateVgiState();
+        updateDistanceState();
         updateStats();
 
         setBounds();

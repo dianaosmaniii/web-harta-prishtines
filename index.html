@@ -16,12 +16,19 @@
         #map {
             width: 100%;
             height: 100vh;
-.panel-section .webgis-btn {
-    margin-right: 6px;
-    margin-bottom: 6px;
-}
+            height: 100dvh;
         }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+        .panel-section .webgis-btn {
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
         .leaflet-container { font-family: Arial, sans-serif; }
         
         .app-toolbar {
@@ -587,41 +594,399 @@ align-items: center;
             margin-top: 8px;
         }
 
+
+        @media (max-width: 768px) {
+            .app-toolbar {
+                left: 10px !important;
+                right: 10px !important;
+                top: 10px !important;
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+                align-items: stretch !important;
+            }
+            .center-title {
+                order: 1;
+                width: auto !important;
+                max-width: 100% !important;
+                padding: 12px 16px !important;
+                border-radius: 28px !important;
+            }
+            .center-title h2 {
+                font-size: 16px !important;
+                line-height: 1.15 !important;
+            }
+            .center-title p {
+                font-size: 10px !important;
+                line-height: 1.15 !important;
+                margin-top: 2px !important;
+            }
+            .toolbar-left,
+            .toolbar-right {
+                width: 100% !important;
+                justify-content: flex-start !important;
+                gap: 8px !important;
+                flex-wrap: wrap !important;
+            }
+            .toolbar-left { order: 2; }
+            .toolbar-right { order: 3; }
+            .toolbar-left .webgis-btn,
+            .toolbar-right .webgis-btn {
+                flex: 0 0 auto !important;
+                min-height: 42px !important;
+                padding: 10px 14px !important;
+                font-size: 14px !important;
+            }
+
+            .side-panel {
+                left: 10px !important;
+                right: 10px !important;
+                top: 178px !important;
+                width: auto !important;
+                max-height: calc(100vh - 250px) !important;
+                padding: 12px !important;
+                border-radius: 16px !important;
+            }
+
+            .map-tools-card {
+                display: none !important;
+            }
+
+            .panel-action-list,
+            .download-actions,
+            .tool-grid,
+            .stats-summary-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .inline-actions {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .webgis-btn,
+            .panel-action-btn,
+            .webgis-select,
+            .webgis-input,
+            .textarea-note {
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .panel-intro h2,
+            .panel-section h3,
+            .subsection-card h4,
+            .panel-collapse summary {
+                word-break: break-word;
+            }
+
+            .coord-box {
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 86px !important;
+                width: auto !important;
+                max-width: none !important;
+                font-size: 11px !important;
+                padding: 8px 10px !important;
+                z-index: 1200 !important;
+            }
+
+            .analysis-box {
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 136px !important;
+                max-width: none !important;
+            }
+
+            .leaflet-top.leaflet-right,
+            .leaflet-bottom.leaflet-right {
+                right: 10px !important;
+            }
+
+            .leaflet-photon.leaflet-control {
+                max-width: calc(100vw - 20px) !important;
+            }
+        }
+
+
+
+        .panel-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.34);
+            z-index: 1290;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .22s ease;
+        }
+        .panel-backdrop.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .app-toolbar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 1400;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .toolbar-left {
+            pointer-events: auto;
+            display:flex;
+            gap:8px;
+            align-items:center;
+            flex-wrap: wrap;
+            max-width: 42%;
+        }
+        .toolbar-right {
+            pointer-events: auto;
+            display:flex;
+            gap:8px;
+            align-items:center;
+        }
+        .toolbar-left .webgis-btn,
+        .toolbar-right .webgis-btn {
+            min-height: 40px;
+            padding: 9px 14px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.12);
+        }
+        .center-title {
+            pointer-events: none;
+            width: min(620px, calc(100vw - 420px));
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(255,255,255,0.95);
+            color: #1c2740;
+            border: 1px solid rgba(201,211,226,0.95);
+            border-radius: 999px;
+            padding: 10px 22px;
+            min-height: 44px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+        }
+        .center-title h2 { margin:0; font-size: 17px; line-height:1.15; font-weight:800; }
+        .center-title p { margin:3px 0 0; font-size: 11px; line-height:1.2; color:#64748b; font-weight:600; }
+        .side-panel {
+            left: 12px;
+            right: auto;
+            top: 92px;
+            width: min(330px, calc(100vw - 96px));
+            max-height: calc(100vh - 132px);
+            padding: 14px;
+            border: 1px solid rgba(214,223,235,0.96);
+            background: rgba(255,255,255,0.96);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+        }
+        .map-tools-card {
+            position: absolute;
+            pointer-events: auto;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1350;
+            width: auto;
+            min-width: 0;
+            background: rgba(255,255,255,0.74);
+            border: 1px solid rgba(214,223,235,0.95);
+            border-radius: 18px;
+            box-shadow: 0 12px 28px rgba(15,23,42,0.14);
+            backdrop-filter: blur(8px);
+            padding: 8px;
+        }
+        .map-tools-card h4,
+        .map-tools-card p,
+        .map-tools-divider,
+        .map-zoom-btn small,
+        .map-tool-btn small,
+        .map-tool-btn strong {
+            display:none !important;
+        }
+        .map-tools-grid,
+        .map-zoom-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .map-tools-grid { margin-bottom: 8px; }
+        .map-tool-btn,
+        .map-zoom-btn {
+            width: 46px;
+            min-width: 46px;
+            height: 46px;
+            min-height: 46px;
+            padding: 0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius: 14px;
+            font-size: 0;
+            line-height: 1;
+            background: #fff;
+            color:#18263f;
+            box-shadow: 0 6px 16px rgba(15,23,42,0.08);
+        }
+        .map-tool-btn::before,
+        .map-zoom-btn::before {
+            font-size: 21px;
+            font-weight: 800;
+            color: #18263f;
+        }
+        #mapQuickSearchBtn::before { content:'⌕'; }
+        #mapQuickBasemapBtn::before { content:'◫'; font-size:18px; }
+        #mapQuickAnalysisBtn::before { content:'◎'; }
+        #mapQuickVgiBtn::before { content:'＋'; }
+        #mapZoomInBtn::before { content:'+'; }
+        #mapZoomOutBtn::before { content:'−'; }
+        #mapZoomHomeBtn::before { content:'⌂'; font-size:18px; }
+        .coord-box {
+            right: 12px;
+            bottom: 12px;
+            max-width: 250px;
+        }
+        @media (max-width: 1024px) {
+            .center-title { width: min(540px, calc(100vw - 360px)); }
+            .side-panel { width: min(310px, calc(100vw - 70px)); }
+            .toolbar-left { max-width: 48%; }
+        }
+        @media (max-width: 768px) {
+            .app-toolbar {
+                left: 10px !important;
+                right: 10px !important;
+                top: 10px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+            }
+            .center-title {
+                order: 1;
+                width: auto !important;
+                max-width: 100% !important;
+                padding: 12px 16px !important;
+                border-radius: 28px !important;
+            }
+            .center-title h2 { font-size: 16px !important; }
+            .center-title p { font-size: 10px !important; }
+            .toolbar-left,
+            .toolbar-right {
+                width: 100% !important;
+                max-width: 100% !important;
+                justify-content: flex-start !important;
+                gap: 8px !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                padding-bottom: 2px !important;
+            }
+            .toolbar-left { order: 2; }
+            .toolbar-right { order: 3; }
+            .toolbar-left .webgis-btn,
+            .toolbar-right .webgis-btn {
+                width: auto !important;
+                flex: 0 0 auto !important;
+                min-height: 42px !important;
+                font-size: 14px !important;
+                white-space: nowrap !important;
+            }
+            .side-panel {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: auto !important;
+                width: min(88vw, 340px) !important;
+                height: 100dvh !important;
+                max-height: none !important;
+                transform: translateX(-104%);
+                transition: transform .24s ease;
+                border-radius: 0 20px 20px 0 !important;
+                padding: 88px 12px 16px !important;
+                z-index: 1300 !important;
+                overflow-y: auto !important;
+                overscroll-behavior: contain;
+            }
+            .side-panel.mobile-open {
+                transform: translateX(0);
+            }
+            .side-panel.hidden {
+                display: block !important;
+            }
+            .map-tools-card {
+                top: auto !important;
+                right: 10px !important;
+                bottom: 128px !important;
+                transform: none !important;
+                padding: 6px !important;
+                border-radius: 16px !important;
+            }
+            .map-tool-btn,
+            .map-zoom-btn {
+                width: 42px;
+                min-width: 42px;
+                height: 42px;
+                min-height: 42px;
+                border-radius: 12px;
+            }
+            .coord-box {
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 10px !important;
+                max-width: none !important;
+                font-size: 11px !important;
+                padding: 8px 10px !important;
+                z-index: 1200 !important;
+            }
+            .analysis-box {
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 64px !important;
+                max-width: none !important;
+            }
+            .panel-action-list,
+            .download-actions,
+            .tool-grid,
+            .stats-summary-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
 </style>
         <title>WebGIS - Kampusi i Universitetit të Prishtinës</title>
     </head>
     <body>
         <div id="map">
         </div>
+        <div id="panelBackdrop" class="panel-backdrop"></div>
 
         <div class="app-toolbar">
             <div class="toolbar-left">
                 <button id="togglePanelBtn" class="webgis-btn primary">Paneli</button>
                 <button id="resetViewBtn" class="webgis-btn ghost">Reset pamjen</button>
+                <button id="focusCampusBtn" class="webgis-btn ghost">Fokus te kampusi</button>
             </div>
             <div class="brand-chip center-title">
   <h2>Kampusi UP – WebGIS</h2>
   <p>Hartë interaktive me kërkim, kontroll shtresash, analizë të thjeshtë dhe feedback lokal</p>
 </div>
-            <div class="toolbar-right">
-                <button id="focusCampusBtn" class="webgis-btn ghost">Fokus te kampusi</button>
-            </div>
+            <div class="toolbar-right"></div>
         </div>
 
         <div id="mapToolsCard" class="map-tools-card">
             <h4>Veglat e hartës</h4>
             <p>Qasje e shpejtë për kërkim, analizë, basemap dhe navigim direkt në hartë.</p>
             <div class="map-tools-grid">
-                <button id="mapQuickSearchBtn" class="map-tool-btn" type="button"><strong>Kërko objekt</strong><small>Gjej dhe fokuso objektin</small></button>
-                <button id="mapQuickBasemapBtn" class="map-tool-btn" type="button"><strong>Ndrysho basemap</strong><small>Kalimi satelit / OSM / pa sfond</small></button>
-                <button id="mapQuickAnalysisBtn" class="map-tool-btn" type="button"><strong>Analizë rrezore</strong><small>Aktivizo analizën me klikim</small></button>
-                <button id="mapQuickVgiBtn" class="map-tool-btn" type="button"><strong>Shto VGI</strong><small>Regjistro feedback lokal</small></button>
+                <button id="mapQuickSearchBtn" title="Kërko objekt" aria-label="Kërko objekt" class="map-tool-btn" type="button"><strong>Kërko objekt</strong><small>Gjej dhe fokuso objektin</small></button>
+                <button id="mapQuickBasemapBtn" title="Ndrysho basemap" aria-label="Ndrysho basemap" class="map-tool-btn" type="button"><strong>Ndrysho basemap</strong><small>Kalimi satelit / OSM / pa sfond</small></button>
+                <button id="mapQuickAnalysisBtn" title="Analizë rrezore" aria-label="Analizë rrezore" class="map-tool-btn" type="button"><strong>Analizë rrezore</strong><small>Aktivizo analizën me klikim</small></button>
+                <button id="mapQuickVgiBtn" title="Shto VGI" aria-label="Shto VGI" class="map-tool-btn" type="button"><strong>Shto VGI</strong><small>Regjistro feedback lokal</small></button>
             </div>
             <div class="map-tools-divider"></div>
             <div class="map-zoom-grid">
-                <button id="mapZoomInBtn" class="map-zoom-btn" type="button">＋<small>Afro</small></button>
-                <button id="mapZoomOutBtn" class="map-zoom-btn" type="button">－<small>Largo</small></button>
-                <button id="mapZoomHomeBtn" class="map-zoom-btn home" type="button">⌂<small>Pamja fillestare</small></button>
+                <button id="mapZoomInBtn" title="Afro" aria-label="Afro" class="map-zoom-btn" type="button">＋<small>Afro</small></button>
+                <button id="mapZoomOutBtn" title="Largo" aria-label="Largo" class="map-zoom-btn" type="button">－<small>Largo</small></button>
+                <button id="mapZoomHomeBtn" title="Pamja fillestare" aria-label="Pamja fillestare" class="map-zoom-btn home" type="button">⌂<small>Pamja fillestare</small></button>
             </div>
         </div>
 <div id="sidePanel" class="side-panel">
@@ -1378,7 +1743,7 @@ align-items: center;
             }
         }
         map.createPane('pane_Kampusi_Universitar_i_Prishtines_5');
-        map.getPane('pane_Kampusi_Universitar_i_Prishtines_5').style.zIndex = 350;
+        map.getPane('pane_Kampusi_Universitar_i_Prishtines_5').style.zIndex = 405;
         map.getPane('pane_Kampusi_Universitar_i_Prishtines_5').style['mix-blend-mode'] = 'normal';
         var layer_Kampusi_Universitar_i_Prishtines_5 = new L.geoJson(json_Kampusi_Universitar_i_Prishtines_5, {
             attribution: '',
@@ -1391,9 +1756,6 @@ align-items: center;
         });
         bounds_group.addLayer(layer_Kampusi_Universitar_i_Prishtines_5);
         map.addLayer(layer_Kampusi_Universitar_i_Prishtines_5);
-        if (layer_Kampusi_Universitar_i_Prishtines_5.bringToBack) {
-            layer_Kampusi_Universitar_i_Prishtines_5.bringToBack();
-        }
         function pop_Salla_1_tetori_6(feature, layer) {
             layer.on({
                 mouseout: function(e) {
@@ -3495,10 +3857,7 @@ align-items: center;
                     ev.stopPropagation();
                     var checked = this.checked;
                     groupEntries.forEach(function(entry){
-                        if (checked) {
-                            map.addLayer(entry.layer);
-                            if (entry.name === 'Kampusi Universitar' && entry.layer.bringToBack) entry.layer.bringToBack();
-                        }
+                        if (checked) map.addLayer(entry.layer);
                         else map.removeLayer(entry.layer);
                     });
                     updateStats();
@@ -3529,10 +3888,7 @@ align-items: center;
 
                     var checkbox = row.querySelector('input');
                     checkbox.addEventListener('change', function(){
-                        if (this.checked) {
-                            map.addLayer(entry.layer);
-                            if (entry.name === 'Kampusi Universitar' && entry.layer.bringToBack) entry.layer.bringToBack();
-                        } else map.removeLayer(entry.layer);
+                        if (this.checked) map.addLayer(entry.layer); else map.removeLayer(entry.layer);
                         updateStats();
                         renderLayerToggles();
                         updateEmptyState();
@@ -3869,7 +4225,7 @@ align-items: center;
             layerRegistry.forEach(function(entry){
                 map.removeLayer(entry.layer);
             });
-            ['Kampusi Universitar','Fakultetet','Fakulteti Teknik','Biblioteka Kombëtare','Konviktet','Menza','Parkingu','Rrugë kryesore','Rrugë kryesore 2','Rrugë dytësore','Shtigje për ecje','Biblioteka','Amfiteatri','Rektorat','Salla e sporteve','Spital apo Qendër familjare','Menza e studentëve'].forEach(function(name){
+            ['Kampusi Universitar','Fakultetet','Fakulteti Teknik','Biblioteka Kombëtare','Konviktet','Menza','Parkingu','Rektorati','Salla 1 Tetori','Rrugë kryesore','Rrugë kryesore 2','Rrugë dytësore','Shtigje për ecje','Biblioteka','Amfiteatri','Rektorat','Salla e sporteve','Spital apo Qendër familjare','Menza e studentëve','Barnatore','Bankomat','Market','Restaurant','Banka','Galeria e Artit'].forEach(function(name){
                 var entry = layerRegistry.find(function(d){ return d.name === name; });
                 if (entry) map.addLayer(entry.layer);
             });
@@ -3897,6 +4253,49 @@ align-items: center;
         map.on('overlayadd overlayremove baselayerchange', function(){ updateStats(); renderLayerToggles(); updateEmptyState(); });
         map.on('zoomend', refreshZoomVisibility);
 
+        (function configureInitialView(){
+            var targetEntries = layerRegistry.filter(function(entry){
+                return ['Kampusi Universitar','Fakultetet','Fakulteti Teknik','Biblioteka Kombëtare','Konviktet','Menza','Rektorati','Salla 1 Tetori','Biblioteka','Amfiteatri','Rektorat','Salla e sporteve','Spital apo Qendër familjare','Menza e studentëve','Bankomat','Barnatore','Banka','Market','Restaurant','Galeria e Artit'].indexOf(entry.name) !== -1;
+            });
+            var bounds = null;
+            targetEntries.forEach(function(entry){
+                if (!entry.layer) return;
+                if (entry.layer.getBounds && typeof entry.layer.getBounds === 'function') {
+                    var b = entry.layer.getBounds();
+                    if (b && b.isValid && b.isValid()) bounds = bounds ? bounds.extend(b) : b;
+                } else if (entry.layer.getLayers && entry.layer.getLayers().length && entry.layer.getLayers()[0].getLatLng) {
+                    entry.layer.getLayers().forEach(function(l){
+                        if (l.getLatLng) {
+                            var latlng = l.getLatLng();
+                            bounds = bounds ? bounds.extend(latlng) : L.latLngBounds(latlng, latlng);
+                        }
+                    });
+                }
+            });
+            if (bounds && bounds.isValid && bounds.isValid()) {
+                initialBounds = bounds.pad(isMobileLayout() ? 0.10 : 0.16);
+                map.fitBounds(initialBounds, {padding: isMobileLayout() ? [18,18] : [28,28], maxZoom:17});
+            }
+            if (isMobileLayout()) {
+                sidePanel.classList.add('hidden');
+                sidePanel.classList.remove('mobile-open');
+            } else {
+                sidePanel.classList.remove('hidden');
+            }
+        })();
+
+        window.addEventListener('resize', function(){
+            if (isMobileLayout()) {
+                sidePanel.classList.add('hidden');
+                sidePanel.classList.remove('mobile-open');
+                if (panelBackdrop) panelBackdrop.classList.remove('is-visible');
+            } else {
+                sidePanel.classList.remove('mobile-open');
+                sidePanel.classList.remove('hidden');
+                if (panelBackdrop) panelBackdrop.classList.remove('is-visible');
+            }
+        });
+
         buildSearchIndex();
 
         var featureSearchInput = document.getElementById('featureSearchInput');
@@ -3909,8 +4308,7 @@ align-items: center;
             var campusEntry = layerRegistry.find(function(d){ return d.name === 'Kampusi Universitar'; });
             if (!campusEntry) return;
             if (!map.hasLayer(campusEntry.layer)) map.addLayer(campusEntry.layer);
-            if (campusEntry.layer.bringToBack) campusEntry.layer.bringToBack();
-            if (campusEntry.layer.getBounds) map.fitBounds(campusEntry.layer.getBounds(), {padding:[30,30], maxZoom:18});
+            if (campusEntry.layer.getBounds) map.fitBounds(campusEntry.layer.getBounds(), {padding: isMobileLayout() ? [20,20] : [34,34], maxZoom:17});
             renderLayerToggles();
             updateStats();
         });
@@ -4161,7 +4559,7 @@ align-items: center;
             var el = document.getElementById('featureSearchInput');
             if (el) el.focus();
             var panel = document.getElementById('sidePanel');
-            if (panel && panel.classList.contains('hidden')) panel.classList.remove('hidden');
+            if (typeof openPanel === 'function') openPanel(); else if (panel && panel.classList.contains('hidden')) panel.classList.remove('hidden');
         });
         bindClickToMany(['quickBasemapBtn','mapQuickBasemapBtn'], cycleBasemap);
         bindClickToMany(['quickAnalysisBtn','mapQuickAnalysisBtn'], function(){ document.getElementById('startAnalysisBtn').click(); });

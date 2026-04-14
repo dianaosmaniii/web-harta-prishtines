@@ -92,6 +92,7 @@ align-items: center;
             position: absolute; bottom: 12px; z-index: 1200; background: rgba(255,255,255,0.95);
             border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,0.18); padding: 8px 10px; font-size: 12px; color: #24344d;
         }
+        .coord-box { pointer-events: none; }
         .coord-box { right: 12px; }
         .analysis-box { left: 12px; max-width: 310px; }
         .analysis-box.hidden { display:none; }
@@ -880,7 +881,7 @@ align-items: center;
         .north-arrow {
             position: absolute;
             right: 12px;
-            top: 120px;
+            top: 12px;
             z-index: 1200;
             width: 52px;
             height: 76px;
@@ -920,6 +921,9 @@ align-items: center;
                 flex-direction: column !important;
                 align-items: stretch !important;
                 gap: 8px !important;
+            }
+            .leaflet-top.leaflet-right .leaflet-control {
+                pointer-events: auto !important;
             }
             .center-title {
                 order: 1;
@@ -1011,7 +1015,7 @@ align-items: center;
                 padding: 7px 9px !important;
             }
             .north-arrow {
-                top: 152px !important;
+                top: 10px !important;
                 right: 10px !important;
                 width: 46px !important;
                 height: 68px !important;
@@ -4026,50 +4030,59 @@ align-items: center;
                 if (!entry.data || !entry.data.features) return;
                 entry.data.features.forEach(function(feature, idx){
                     var props = feature.properties || {};
-                    var name = props.name || props.NAME || props.fclass || entry.name || '';
-                    if (!name) return;
+                    var propertyValues = Object.keys(props).map(function(key){
+                        var val = props[key];
+                        return (typeof val === 'string' || typeof val === 'number') ? String(val) : '';
+                    }).filter(Boolean);
+                    var nameCandidates = [
+                        props.name, props.NAME, props.emri, props.EMRI, props.Name, props.title, props.Title,
+                        props.label, props.Label, props.fclass, props.type, entry.name
+                    ].filter(function(v){ return v !== null && v !== undefined && String(v).trim() !== ''; });
+                    var displayName = nameCandidates.length ? String(nameCandidates[0]) : entry.name;
                     var category = entry.category || props.category || '';
                     var subcategory = props.type || props.fclass || '';
                     var extraKeywords = (entry.keywords || []).join(' ');
-                    var searchable = [
-                        name,
-                        category,
-                        subcategory,
-                        props.description || '',
-                        props.note || '',
-                        extraKeywords
-                    ].join(' ').toLowerCase().trim();
+                    var searchableRaw = [displayName, category, subcategory, props.description || '', props.note || '', extraKeywords]
+                        .concat(propertyValues)
+                        .join(' ')
+                        .trim();
+                    var searchableNormalized = normalizeSearchText(searchableRaw);
+                    if (!searchableNormalized) return;
 
                     searchIndex.push({
                         uid: entry.name + '||' + idx,
                         layerName: entry.name,
                         featureIndex: idx,
                         featureId: props.id || idx,
-                        name: name,
+                        name: displayName,
                         category: category,
                         subcategory: subcategory,
-                        searchable: searchable
+                        searchable: searchableNormalized,
+                        originalSearchable: searchableRaw
                     });
                 });
             });
         }
 
         function scoreSearchResult(item, query) {
-            var q = (query || '').toLowerCase().trim();
-            var name = (item.name || '').toLowerCase();
+            var q = normalizeSearchText(query || '');
+            var name = normalizeSearchText(item.name || '');
             var searchable = item.searchable || '';
             if (!q) return 10;
-            if (name === q) return 100;
-            if (name.startsWith(q)) return 80;
-            if (name.includes(q)) return 60;
-            if (searchable.includes(q)) return 40;
+            if (name === q) return 120;
+            if (name.startsWith(q)) return 95;
+            if (name.includes(q)) return 75;
+            if (searchable.includes(q)) return 50;
+            var parts = q.split(' ').filter(Boolean);
+            if (parts.length && parts.every(function(part){ return searchable.includes(part); })) return 35;
             return 0;
         }
 
         function zoomToIndexedFeature(item) {
             var entry = layerRegistry.find(function(d){ return d.name === item.layerName; });
             if (!entry) return;
-            if (!map.hasLayer(entry.layer)) map.addLayer(entry.layer);
+            entry.desiredVisible = true;
+            applyLayerVisibilityByZoom();
 
             var targetLayer = null;
             var counter = -1;
@@ -4105,7 +4118,7 @@ align-items: center;
                 return;
             }
 
-            results.slice(0, 10).forEach(function(item){
+            results.slice(0, 12).forEach(function(item){
                 var div = document.createElement('div');
                 div.className = 'search-result-item';
                 div.innerHTML = '<strong>' + item.name + '</strong><small>' + item.layerName + (item.category ? ' · ' + item.category : '') + '</small>';
@@ -4122,7 +4135,8 @@ align-items: center;
             var resultsBox = document.getElementById('featureSearchResults');
             if (!featureSearchInput || !featureCategoryFilter || !resultsBox) return;
 
-            var query = (featureSearchInput.value || '').trim().toLowerCase();
+            var rawQuery = (featureSearchInput.value || '').trim();
+            var query = normalizeSearchText(rawQuery);
             var category = featureCategoryFilter.value || '';
 
             if (!query && !category) {
@@ -4130,14 +4144,15 @@ align-items: center;
                 return;
             }
 
+            var queryParts = query.split(' ').filter(Boolean);
             var results = searchIndex
                 .filter(function(item){
                     var categoryOk = !category || item.category === category;
-                    var queryOk = !query || item.searchable.includes(query);
+                    var queryOk = !query || item.searchable.includes(query) || (queryParts.length && queryParts.every(function(part){ return item.searchable.includes(part); }));
                     return categoryOk && queryOk;
                 })
                 .map(function(item){
-                    return Object.assign({}, item, {score: scoreSearchResult(item, query)});
+                    return Object.assign({}, item, {score: scoreSearchResult(item, rawQuery)});
                 })
                 .sort(function(a, b){
                     if (b.score !== a.score) return b.score - a.score;
@@ -4146,7 +4161,6 @@ align-items: center;
 
             renderSearchResults(results);
         }
-
 
         function bindClickToMany(ids, handler) {
             ids.forEach(function(id){
@@ -4160,6 +4174,20 @@ align-items: center;
                 var el = document.getElementById(id);
                 if (el) el.classList.toggle('is-active', !!isActive);
             });
+        }
+
+        function isMobileLayout() {
+            return window.innerWidth <= 768;
+        }
+
+        function normalizeSearchText(value) {
+            return String(value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '')
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
         }
 
         var initialBounds = map.getBounds();
@@ -4709,9 +4737,14 @@ align-items: center;
         });
         bindClickToMany(['quickSearchBtn','mapQuickSearchBtn'], function(){
             var el = document.getElementById('featureSearchInput');
-            if (el) el.focus();
-            var panel = document.getElementById('sidePanel');
-            if (typeof openPanel === 'function') openPanel(); else if (panel && panel.classList.contains('hidden')) panel.classList.remove('hidden');
+            if (!el) return;
+            openPanel();
+            setTimeout(function(){
+                el.focus();
+                if (typeof el.select === 'function') el.select();
+                el.scrollIntoView({behavior:'smooth', block:'center'});
+                runIndexedSearch();
+            }, 120);
         });
         bindClickToMany(['quickBasemapBtn','mapQuickBasemapBtn'], cycleBasemap);
         bindClickToMany(['quickAnalysisBtn','mapQuickAnalysisBtn'], function(){ document.getElementById('startAnalysisBtn').click(); });
